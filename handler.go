@@ -1,4 +1,4 @@
-package handlers
+package main
 
 import (
 	"net/http"
@@ -10,7 +10,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/cas-4/alertd/config"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,7 +38,7 @@ func NewAlert(c *gin.Context) {
 		return
 	}
 
-	conf, _ := config.GetConfig()
+	cfg, _ := GetConfig()
 
 	// GraphQL mutation payload
 	payload := map[string]interface{}{
@@ -57,7 +56,7 @@ func NewAlert(c *gin.Context) {
 		},
 	}
 
-	response, err := MakeHttpRequest(conf.String("backend.url"), payload, input.Login)
+	response, err := MakeHttpRequest(cfg.String("backend.url"), payload, input.Login)
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
