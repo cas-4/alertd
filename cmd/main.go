@@ -1,8 +1,9 @@
-package alertd
+package main
 
 import (
-	"log"
+	"github.com/charmbracelet/log"
 
+	"github.com/cas-4/alertd"
 	"github.com/gin-gonic/gin"
 	cors "github.com/rs/cors/wrapper/gin"
 )
@@ -15,7 +16,7 @@ func main() {
 	var err error
 
 	// Read environment variables and stops execution if any errors occur
-	err = LoadConfig()
+	err = alertd.LoadConfig()
 	if err != nil {
 		log.Printf("failed to load config. err %v", err)
 
@@ -23,13 +24,17 @@ func main() {
 	}
 
 	// Ignore error because if it failed on loading, it should raised an error above.
-	cfg, _ := GetConfig()
+	cfg, _ := alertd.GetConfig()
 
 	if !cfg.Bool("debug") {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	router.POST("/alerts/", NewAlert)
+	if err := alertd.RedisConnect(cfg.String("redis")); err != nil {
+		log.Fatalf("Can't connect to Redis with `%s`", cfg.String("redis"))
+	}
+
+	router.POST("/alerts/", alertd.NewAlert)
 
 	router.Run(cfg.String("address"))
 }

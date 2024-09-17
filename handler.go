@@ -24,6 +24,7 @@ type Response struct {
 
 // Request payload by the user
 type AlertInput struct {
+	Uid            string  `json:"uid" binding:"required"`
 	Latitude       float64 `json:"latitude" binding:"required"`
 	Longitude      float64 `json:"longitude" binding:"required"`
 	MovingActivity string  `json:"movingActivity" binding:"required"`
@@ -40,30 +41,37 @@ func NewAlert(c *gin.Context) {
 
 	cfg, _ := GetConfig()
 
-	// GraphQL mutation payload
-	payload := map[string]interface{}{
-		"query": `mutation NewPosition($input: PositionInput!) { 
-        newPosition(input: $input) { 
-            id
-        } 
-    }`,
-		"variables": map[string]interface{}{
-			"input": map[string]interface{}{
-				"latitude":       input.Latitude,
-				"longitude":      input.Longitude,
-				"movingActivity": input.MovingActivity,
-			},
-		},
-	}
-
-	response, err := MakeHttpRequest(cfg.String("backend.url"), payload, input.Login)
+	useCache, err := UsePositionCache(input)
 
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, response)
+	if *useCache {
+		c.JSON(http.StatusOK, map[string]bool{"useCache": true})
+	} else {
+		// GraphQL mutation payload
+		payload := map[string]interface{}{
+			"query": `mutation NewPosition($input: PositionInput!) { newPosition(input: $input) { id } }`,
+			"variables": map[string]interface{}{
+				"input": map[string]interface{}{
+					"latitude":       input.Latitude,
+					"longitude":      input.Longitude,
+					"movingActivity": input.MovingActivity,
+				},
+			},
+		}
+
+		response, err := MakeHttpRequest(cfg.String("backend.url"), payload, input.Login)
+
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusCreated, response)
+	}
 }
 
 // Prepare and send a new HTTP request
