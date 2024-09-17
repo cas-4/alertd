@@ -61,26 +61,25 @@ func UsePositionCache(input AlertInput) (*bool, error) {
 
 		diffTime := time.Now().Sub(timestamp).Seconds()
 
-		// An IN_VEHICLE values should be updated more quickly rather than STILL
-		// values.
-		switch pos["movingActivity"] {
-		case "IN_VEHICLE":
-			useCache = diffTime < 60
-			break
-		default:
-			useCache = diffTime < 120
-			break
-		}
+		lng, _ := strconv.ParseFloat(pos["longitude"], 64)
+		lat, _ := strconv.ParseFloat(pos["latitude"], 64)
+		useCache = lng == input.Longitude && lat == input.Latitude
 
 		if !useCache {
-			lng, _ := strconv.ParseFloat(pos["longitude"], 64)
-			lat, _ := strconv.ParseFloat(pos["latitude"], 64)
-			log.Printf("%f %f %f %f", lng, input.Longitude, lat, input.Latitude)
-			useCache = lng == input.Longitude && lat == input.Latitude
+			// An IN_VEHICLE values should be updated more quickly rather than STILL
+			// values.
+			switch pos["movingActivity"] {
+			case "IN_VEHICLE":
+				useCache = diffTime < 60
+				break
+			default:
+				useCache = diffTime < 120
+				break
+			}
 		}
 
 		if useCache {
-			log.Infof("Found a cached value for `%s` at time `%s`, with current diff time = `%f`s", input.Uid, pos["timestamp"], diffTime)
+			log.Infof("Found a cached value for `%s` at time `%s`, with current diff time = `%f`s\nlng = %f, lng2 = %f, lat = %f, lat2 = %f", input.Uid, pos["timestamp"], diffTime, lng, input.Longitude, lat, input.Latitude)
 		}
 	}
 
