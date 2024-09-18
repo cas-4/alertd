@@ -56,7 +56,12 @@ func UsePositionCache(input AlertInput) (*bool, error) {
 		timestamp, err := time.Parse("2006-01-02T15:04:05.999999999-07:00", pos["timestamp"])
 
 		if err != nil {
-			return nil, err
+			log.Warnf("Parsing timestamp: %s", err)
+			timestamp, err = time.Parse("2006-01-02T15:04:05.999999999Z", pos["timestamp"])
+
+			if err != nil {
+				return nil, err
+			}
 		}
 
 		diffTime := time.Now().Sub(timestamp).Seconds()
