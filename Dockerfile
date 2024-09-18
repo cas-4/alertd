@@ -22,6 +22,7 @@ EXPOSE 8080
 
 ENV BACKEND_URL="http://0.0.0.0:8000/graphql"
 ENV ADDRESS="0.0.0.0:8080"
+ENV REDIS="redis://default:@localhost:6379/0"
 ENV DEBUG=0
 
 CMD ["./main"]
