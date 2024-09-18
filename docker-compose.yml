@@ -1,0 +1,26 @@
+version: "3"
+services:
+  redis:
+    image: redis:latest
+    container_name: alertd-redis
+    restart: always
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    networks:
+      - default
+
+  alertd:
+    image: alertd
+    container_name: alertd
+    environment:
+      - DEBUG=${DEBUG}
+      - ADDRESS=${ADDRESS}
+      - BACKEND_URL=${BACKEND_URL}
+      - REDIS=${REDIS}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    networks:
+      - default
+
