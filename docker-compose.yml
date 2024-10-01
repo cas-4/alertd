@@ -11,7 +11,7 @@ services:
       - default
 
   alertd:
-    image: alertd
+    image: ghcr.io/cas-4/alertd:latest
     container_name: alertd
     environment:
       - DEBUG=${DEBUG}
@@ -23,4 +23,8 @@ services:
     restart: unless-stopped
     networks:
       - default
+      - cas
 
+networks:
+  cas:
+    external: true
